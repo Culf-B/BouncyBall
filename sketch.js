@@ -87,6 +87,12 @@ class WaterContainer
         }
       }
     }
+    if (keyIsDown(DOWN_ARROW) && this.waterHeight > 0) {
+      this.waterHeight -= 10;
+      if (this.waterHeight < 0) {
+        this.waterHeight = 0;
+      }
+    }
   }
 }
 
