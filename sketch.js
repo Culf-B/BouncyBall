@@ -1,5 +1,5 @@
 // Ball bounces around screen and when it hits still standing ball it explodes
-var bigBall;
+var staticBalls = [];
 var movingBalls = [];
 const SW = 400;
 const SH = 400;
@@ -8,9 +8,10 @@ function setup()
 {
   createCanvas(SW, SH);
 
-  bigBall = new Ball(200, 200, random(-10, 10), random(-10, 10), 40, 100, 0, 200);
   for (let i = 0; i < 1000; i = i + 1)
   {
+    staticBalls.push(new Ball(0, 0, random(-10, 10), random(-10, 10), 10, 100, 0, 200));
+    staticBalls[staticBalls.length - 1].randomizePos(SW, SH);
     movingBalls.push(new Ball(0, 0, random(-10, 10), random(-10, 10), 5));
     movingBalls[movingBalls.length - 1].randomizePos(SW, SH);
   }
@@ -20,18 +21,20 @@ function draw()
 {
   background(220);
 
-  bigBall.draw();
-  bigBall.move(SW, SH);
-
   for (let i = 0; i < movingBalls.length; i = i + 1)
   {
     movingBalls[i].move(SW, SH);
     movingBalls[i].draw();
-    if (bigBall.intersects(movingBalls[i]))
+  }
+
+  for (let i = 0; i < staticBalls.length; i = i + 1)
+  {
+    staticBalls[i].draw();
+    intersection = staticBalls[i].intersectsArr(movingBalls);
+    if (!isNaN(intersection))
     {
-      //movingBalls[i].setColor(255, 0, 0);
-      //staticBalls[i].randomizePos(SW, SH);
-      movingBalls.splice(i, 1);
+      staticBalls.splice(i, 1);
+      movingBalls.splice(intersection, 1);
       /*
       If there are more than one ball
       and the deleted ball was not
@@ -40,10 +43,6 @@ function draw()
       1 is not subtracted from i
       */
       i = i - 1;
-    }
-    else
-    {
-      movingBalls[i].setColor(255, 255, 255);
     }
   }
 }
@@ -118,5 +117,17 @@ class Ball
     {
       return false;
     }
+  }
+
+  intersectsArr(arr)
+  {
+    for (let i = 0; i < arr.length; i = i + 1)
+    {
+      if (this.intersects(arr[i]))
+      {
+        return i;
+      }
+    }
+    return NaN;
   }
 }
