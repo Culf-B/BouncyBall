@@ -1,5 +1,7 @@
 var enemies = [];
 var bullets = [];
+var stars = [];
+var specialStars = [];
 var player;
 
 const SW = 600;
@@ -11,6 +13,11 @@ function setup()
 
   for(let i = 0; i < 150; i = i + 1)
   {
+    stars.push(new Star(SW, SH));
+    if (i < 50)
+    {
+      specialStars.push(new Star(SW, SH));
+    }
   }
 
   player = new Player(SW - 30, SH / 2, 10, 40);
@@ -18,9 +25,18 @@ function setup()
 
 function draw()
 {
-  background(220);
+  background(0, 0, 30);
 
+  // Update stars (background effect)
+  for(let i = 0; i < stars.length; i = i + 1)
   {
+    stars[i].show();
+    stars[i].jitter();
+  }
+  for(let i = 0; i < specialStars.length; i = i + 1)
+  {
+    specialStars[i].special();
+    specialStars[i].jitter();
   }
 
   player.update();
@@ -240,4 +256,66 @@ class Enemy extends Ball
   }
 }
 
+// Star af Ida-Marie
+class Star
+  {
+    constructor(SW, SH)
+    {
+      this.x = random(0, SW);
+      this.y = random(0, SH);
+      this.r = random(3, 7);
+
+      this.size = random(0, 1);
+      
+      this.xSpeed = random(-1, 1);
+      this.ySpeed = random(-1, 1);
+
+      this.glitterSpeed = random(-3, 3);
+      
+      this.o = random(0, 50);
+      this.weight = random(1, 4);
+
+      this.angle = random(0, 360);
+      
+    } 
+    
+    show()
+    {
+      push();
+      noStroke();
+      fill(255, this.o);
+      circle(this.x, this.y, this.r / 2);
+      fill(245, 229, 127, this.o);
+      circle(this.x, this.y, this.r);
+      pop();
+    }
+
+    special()
+    {
+      push();
+      //this.angle=this.angle+0.1;
+      stroke(245, 229, 127, this.o);
+      strokeWeight(this.weight);
+
+      rotate(this.angle);
+      line(this.x, this.y - (this.r * this.size), this.x, this.y + (this.r * this.size));
+      line(this.x - (this.r * this.size), this.y, this.x + (this.r * this.size), this.y);
+      pop();
+    }
+    
+    jitter()
+    {
+      this.o = this.o + this.glitterSpeed;
+      if(this.o > 70 || this.o < 0)
+      {
+        this.glitterSpeed = this.glitterSpeed *-1;
+      }
+
+      this.xSpeed = random(-0.15, 0.15);
+      this.ySpeed = random(-0.15, 0.15);
+      
+      this.x = this.x + this.xSpeed;
+      this.y = this.y + this.ySpeed;
+    }
+  
 }
