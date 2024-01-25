@@ -1,48 +1,126 @@
-// Ball bounces around screen and when it hits still standing ball it explodes
-var staticBalls = [];
-var movingBalls = [];
-const SW = 400;
-const SH = 400;
+var enemies = [];
+var bullets = [];
+var player;
+
+const SW = 600;
+const SH = 600;
 
 function setup()
 {
   createCanvas(SW, SH);
 
-  for (let i = 0; i < 1000; i = i + 1)
+  for(let i = 0; i < 150; i = i + 1)
   {
-    staticBalls.push(new Ball(0, 0, random(-10, 10), random(-10, 10), 10, 100, 0, 200));
-    staticBalls[staticBalls.length - 1].randomizePos(SW, SH);
-    movingBalls.push(new Ball(0, 0, random(-10, 10), random(-10, 10), 5));
-    movingBalls[movingBalls.length - 1].randomizePos(SW, SH);
   }
+
+  player = new Player(SW - 30, SH / 2, 10, 40);
 }
 
 function draw()
 {
   background(220);
 
-  for (let i = 0; i < movingBalls.length; i = i + 1)
   {
-    movingBalls[i].move(SW, SH);
-    movingBalls[i].draw();
   }
 
-  for (let i = 0; i < staticBalls.length; i = i + 1)
+  player.update();
+
+  // Spawn enemies
+  if (random(0, 50) < 1)
   {
-    staticBalls[i].draw();
-    intersection = staticBalls[i].intersectsArr(movingBalls);
-    if (!isNaN(intersection))
+    let enemyRadius = 15;
+    enemies.push(new Enemy(-enemyRadius, random(enemyRadius, SH - enemyRadius), 2, enemyRadius));
+  }
+
+  // Update bullets
+  for (let i = 0; i < bullets.length; i = i + 1)
+  {
+    bullets[i].update(SW, SH);
+    if (bullets[i].outOfBounds())
     {
-      staticBalls.splice(i, 1);
-      movingBalls.splice(intersection, 1);
-      /*
-      If there are more than one ball
-      and the deleted ball was not
-      the last ball in the array,
-      it will skip the next ball if
-      1 is not subtracted from i
-      */
+      bullets.splice(i, 1);
       i = i - 1;
+    }
+  }
+
+  // Update enemies
+  for (let i = 0; i < enemies.length; i = i + 1)
+  {
+    enemies[i].move();
+    enemies[i].draw();
+
+    // Check if enemy is out of bounds
+    if (enemies[i].outOfBounds(SW))
+    {
+      enemies.splice(i, 1);
+
+      // Go back 1 index to not skip a ball
+      i = i - 1;
+    }
+    else 
+    {
+      // Check if enemy has been hit by a bullet
+      intersection = enemies[i].intersectsArr(bullets);
+      if (!isNaN(intersection))
+      {
+        enemies.splice(i, 1);
+        bullets.splice(intersection, 1);
+
+        // Go back 1 index to not skip a ball
+        i = i - 1;
+      }
+    }
+
+  }
+}
+
+
+
+class Player
+{
+  constructor(x, y, speed = 10, size = 10, bulletDirection = -1)
+  {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+    this.bulletDirection = bulletDirection;
+    this.size = size;
+    this.spaceDownPrev = false;
+    this.bulletRadius = 10;
+  }
+
+  update()
+  {
+    this.events();
+    this.draw();
+  }
+
+  draw()
+  {
+    square(this.x - this.size / 2, this.y - this.size / 2, this.size);
+  }
+
+  events()
+  {
+    if (keyIsDown(32)) // Keycode 32 = space
+    {
+      if (!this.spaceDownPrev)
+      {
+        bullets.push(new Bullet(this.x + (this.size / 2 + this.bulletRadius)* this.bulletDirection, this.y, 10 * this.bulletDirection, this.bulletRadius));
+        this.spaceDownPrev = true;
+      }
+    }
+    else
+    {
+      this.spaceDownPrev = false;
+    }
+    if (keyIsDown(UP_ARROW) || keyIsDown(87))
+    {
+      this.y = this.y - this.speed;
+    }
+    if (keyIsDown(DOWN_ARROW) || keyIsDown(83))
+    {
+      this.y = this.y + this.speed;
     }
   }
 }
@@ -60,29 +138,11 @@ class Ball
     this.colorG = colorG;
     this.colorB = colorB;
   }
-  move(screenWidth, screenHeight)
+  move()
   {
     // Update position
     this.x = this.x + this.vX;
     this.y = this.y + this.vY;
-
-    // Check collision with screen and update speed
-    // Left
-    if (this.x < 0 + this.r) {
-      this.vX = this.vX * (-1);
-    }
-    // Right
-    if (this.x > screenWidth - this.r) {
-      this.vX = this.vX * (-1);
-    }
-    // Top
-    if (this.y < 0 + this.r) {
-      this.vY = this.vY * (-1);
-    }
-    // Bottom
-    if (this.y > screenHeight - this.r) {
-      this.vY = this.vY * (-1);
-    }
   }
 
   draw()
@@ -130,4 +190,54 @@ class Ball
     }
     return NaN;
   }
+}
+
+class Bullet extends Ball
+{
+  constructor(x = 200, y = 200, v = 10, r = 5, colorR = 0, colorG = 0, colorB = 255)
+  {
+    super(x, y, v, 0, r, colorR, colorG, colorB);
+  }
+  update(SW, SH)
+  {
+    this.draw();
+    this.move(SW, SH);
+  }
+  outOfBounds()
+  {
+    if (this.x < 0)
+    {
+      return true;
+    } 
+    else
+    {
+      return false
+    }
+  }
+}
+
+class Enemy extends Ball
+{
+  constructor(x = 200, y = 200, v = 0, r = 20, colorR = 150, colorG = 150, colorB = 150)
+  {
+    super(x, y, v, 0, r, colorR, colorG, colorB);
+  }
+  update(SW, SH)
+  {
+    this.draw();
+    this.move(SW, SH);
+  }
+  outOfBounds(SW)
+  {
+    if (this.x > SW + this.r)
+    {
+      return true;
+    } 
+    else
+    {
+      return false
+    }
+  }
+}
+
 }
