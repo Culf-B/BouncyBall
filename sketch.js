@@ -20,7 +20,7 @@ function setup()
     }
   }
 
-  player = new Player(SW - 30, SH / 2, 10, 40);
+  player = new Player(SW - 30, SH / 2, 1, 40);
 }
 
 function draw()
@@ -39,7 +39,7 @@ function draw()
     specialStars[i].jitter();
   }
 
-  player.update();
+  player.update(SH);
 
   // Spawn enemies
   if (random(0, 50) < 1)
@@ -90,30 +90,52 @@ function draw()
   }
 }
 
-
-
 class Player
 {
-  constructor(x, y, speed = 10, size = 10, bulletDirection = -1)
+  constructor(x, y, acceleration = 1, size = 10, bulletDirection = -1)
   {
     this.x = x;
     this.y = y;
-    this.speed = speed;
+    this.acceleration = acceleration;
+    this.vX = 0;
+    this.vY = 0;
+    this.friction = 0.95;
     this.bulletDirection = bulletDirection;
     this.size = size;
     this.spaceDownPrev = false;
     this.bulletRadius = 10;
   }
 
-  update()
+  update(screenHeight)
   {
     this.events();
+    this.move(screenHeight);
     this.draw();
   }
 
   draw()
   {
     square(this.x - this.size / 2, this.y - this.size / 2, this.size);
+  }
+
+  move(screenHeight)
+  {
+    this.x = this.x + this.vX;
+    this.y = this.y + this.vY;
+    this.vX = this.vX * this.friction;
+    this.vY = this.vY * this.friction;
+
+    // Detect collision with top and bottom of the screen
+    if (this.y < this.size / 2)
+    {
+      this.vY = 0;
+      this.y = this.size / 2;
+    }
+    else if (this.y > screenHeight - this.size / 2)
+    {
+      this.vY = 0;
+      this.y = screenHeight - this.size / 2;
+    }
   }
 
   events()
@@ -132,11 +154,11 @@ class Player
     }
     if (keyIsDown(UP_ARROW) || keyIsDown(87))
     {
-      this.y = this.y - this.speed;
+      this.vY = this.vY - this.acceleration;
     }
     if (keyIsDown(DOWN_ARROW) || keyIsDown(83))
     {
-      this.y = this.y + this.speed;
+      this.vY = this.vY + this.acceleration;
     }
   }
 }
